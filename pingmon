@@ -1,0 +1,35 @@
+#!/bin/bash
+if [[ "$@" == "" ]]; then
+  echo
+  echo "usage: pingmon <hostname/IP address>"
+  echo
+  exit 0 
+fi
+
+CTRLC="0" 
+
+trap bashtrap INT
+
+bashtrap()
+{
+  echo
+  echo
+  let LOST="$SENT-$RECEIVED"
+  echo "$SENT sent, $RECEIVED received, $LOST lost"
+  echo
+  exit 0
+}
+
+while (true)
+do
+  RESULT=`/bin/ping -q -W 1 -c 1 $@ | /bin/grep transmitted`
+  let SENT=$SENT+1
+  if [[ "$RESULT" == *100%\ packet\ loss* ]]; then
+    echo -e "\007 $@ - $RESULT"
+    sleep 1
+  else 
+    echo " $@ - $RESULT"
+    let RECEIVED=$RECEIVED+1
+    sleep 1 
+  fi
+done
